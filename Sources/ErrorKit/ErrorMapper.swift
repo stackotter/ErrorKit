@@ -61,7 +61,7 @@
 ///     // Message will be generated from FirebaseErrorMapper for Auth/Firestore/Storage errors
 /// }
 /// ```
-public protocol ErrorMapper {
+public protocol ErrorMapper: Sendable, SendableMetatype {
    /// Maps a given error to a user-friendly message if possible.
    ///
    /// This function is called by ErrorKit when attempting to generate a user-friendly error message.

@@ -21,7 +21,7 @@ do {
 } catch {
     // 😕 Only shows the leaf error with no chain information
     Logger().error("Error occurred: \(error)")
-    
+
     // 😕 Shows a better message but still no error chain
     Logger().error("Error: \(ErrorKit.userFriendlyMessage(for: error))")
     // Output: "Could not find database file."
@@ -44,7 +44,7 @@ do {
 } catch {
     // 🎯 Always use this for debug logging
     Logger().error("\(ErrorKit.errorChainDescription(for: error))")
-    
+
     // Output shows the complete chain:
     // ProfileError
     // └─ DatabaseError
@@ -100,7 +100,7 @@ struct ErrorTracker {
     static func log(_ error: Error) {
         // Get a stable ID that ignores dynamic parameters
         let groupID = ErrorKit.groupingID(for: error) // e.g. "3f9d2a"
-        
+
         Analytics.track(
             event: "error_occurred",
             properties: [

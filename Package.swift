@@ -8,16 +8,15 @@ let package = Package(
    products: [.library(name: "ErrorKit", targets: ["ErrorKit"])],
    dependencies: [
       // CryptoKit is not available on Linux, so we need Swift Crypto
-      .package(url: "https://github.com/apple/swift-crypto.git", from: "3.11.0"),
+      .package(url: "https://github.com/rarestype/h", from: "1.0.0"),
    ],
    targets: [
       .target(
          name: "ErrorKit",
          dependencies: [
             .product(
-               name: "Crypto",
-               package: "swift-crypto",
-               condition: .when(platforms: [.android, .linux, .openbsd, .wasi, .windows])
+               name: "SHA2",
+               package: "h"
             ),
          ],
          resources: [
