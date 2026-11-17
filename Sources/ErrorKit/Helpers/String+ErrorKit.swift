@@ -53,24 +53,18 @@ extension String {
       return nil
    }()
 
-   // On Apple platforms, use the old localization API with the module's
+   // On Apple platforms, use the older localization API with the module's
    // resource bundle when it's available.
-   static func localized(key: StaticString, defaultValue: String.LocalizationValue) -> String {
-      guard let resourceBundle else {
-         // The bundle isn't available (e.g. a standalone binary that wasn't
-         // distributed with it). Use the default (English) translation.
-         return NSLocalizedString(
-            key.description,
-            tableName: nil,
-            bundle: .main,
-            value: defaultValue,
-            comment: defaultValue
-         )
-      }
+   //
+   // `String.LocalizationValue` (and `String(localized:)`) require macOS 12,
+   // but ErrorKit supports macOS 10.15, so this uses `NSLocalizedString`. When
+   // the resource bundle is missing (e.g. a standalone binary that wasn't
+   // distributed with it) the English default is used instead of crashing.
+   static func localized(key: StaticString, defaultValue: String) -> String {
       return NSLocalizedString(
          key.description,
          tableName: nil,
-         bundle: resourceBundle,
+         bundle: resourceBundle ?? .main,
          value: defaultValue,
          comment: defaultValue
       )
