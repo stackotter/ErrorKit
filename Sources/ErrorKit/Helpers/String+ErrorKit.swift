@@ -2,12 +2,73 @@ import Foundation
 
 extension String {
    #if canImport(CryptoKit)
-   // On Apple platforms, use the modern localization API with Bundle.module
+   /// Used to locate the resource bundle of the framework/module that contains
+   /// this type (mirrors SwiftPM's generated `Bundle.module` implementation).
+   private final class BundleFinder {}
+
+   /// The resource bundle that SwiftPM generates for ErrorKit, if it can be
+   /// found at runtime.
+   ///
+   /// `Bundle.module` traps when the bundle is missing, which happens whenever
+   /// ErrorKit is linked into an executable that is distributed without its
+   /// resource bundle (for example a standalone CLI copied out of the build
+   /// products directory). Resolving the bundle ourselves lets us fall back to
+   /// the English translations provided at the call sites instead of crashing.
+   private static let resourceBundle: Bundle? = {
+      // This implementation was taken from https://github.com/yonaskolb/XcodeGen/blob/783a19e863ff906e042d061aa0a1d569d3c52ffa/Sources/XcodeGenKit/SettingsBuilder.swift#L273
+
+      let bundleName = "ErrorKit_ErrorKit"
+
+      let overrides: [URL]
+      #if DEBUG
+      // Set by SwiftPM/Xcode when running tests (mirrors the generated
+      // `Bundle.module` accessor).
+      if let override = ProcessInfo.processInfo.environment[
+         "PACKAGE_RESOURCE_BUNDLE_PATH"
+      ] ?? ProcessInfo.processInfo.environment["PACKAGE_RESOURCE_BUNDLE_URL"] {
+         overrides = [URL(fileURLWithPath: override)]
+      } else {
+         overrides = []
+      }
+      #else
+      overrides = []
+      #endif
+
+      let candidates = overrides + [
+         // Bundle should be present here when the package is linked into an app.
+         Bundle.main.resourceURL,
+         // Bundle should be present here when the package is linked into a framework.
+         Bundle(for: BundleFinder.self).resourceURL,
+         // For command-line tools.
+         Bundle.main.bundleURL,
+      ].compactMap { $0 }
+
+      for candidate in candidates {
+         let url = candidate.appendingPathComponent("\(bundleName).bundle")
+         if let bundle = Bundle(url: url) {
+            return bundle
+         }
+      }
+
+      return nil
+   }()
+
+   // On Apple platforms, use the modern localization API with the module's
+   // resource bundle when it's available.
    static func localized(key: StaticString, defaultValue: String.LocalizationValue) -> String {
+      guard let resourceBundle else {
+         // The bundle isn't available (e.g. a standalone binary that wasn't
+         // distributed with it). Use the default (English) translation.
+         return String(
+            localized: key,
+            defaultValue: defaultValue,
+            bundle: .main
+         )
+      }
       return String(
          localized: key,
          defaultValue: defaultValue,
-         bundle: Bundle.module
+         bundle: resourceBundle
       )
    }
    #else
